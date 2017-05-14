@@ -1,4 +1,4 @@
-﻿#!/usr/bin/perl
+#!/usr/bin/perl
 
 use strict;
 use warnings;
@@ -61,7 +61,8 @@ open(my $log_fh, '>>', $script_path."/log/wolf_ism8i.log") or die "Could not ope
 *STDOUT = $log_fh;
 *STDERR = $log_fh;
 
-add_to_log("############ Strate Wolf ISM8i Auswertungs-Modul ############\n");
+add_to_log("");
+add_to_log("############ Strate Wolf ISM8i Auswertungs-Modul ############");
 
 
 #Subs aufrufen:
@@ -72,8 +73,6 @@ loadDatenpunkte();
 writeDatenpunkteToLog();
 
 #showDatenpunkte();
-
-add_to_log("");
 
 start_IGMPserver();
 
@@ -88,7 +87,7 @@ start_WolfServer();
 sub start_IGMPserver
 # Startet einen Multicast Server
 {
-   add_to_log("# Creting multicast group server: $hash{mcip}:$hash{mcport}");
+   add_to_log("Creating multicast group server $hash{mcip}:$hash{mcport}:");
 
    $igmp_sock = IO::Socket::Multicast->new(
            Proto     => 'udp',
@@ -98,7 +97,7 @@ sub start_IGMPserver
 
    # ACHTUNG: kein $igmp_sock->mcast_add() bei Server!
    
-   add_to_log("# Creting to multicast group success.\n");
+   add_to_log("   Creating to multicast group success.");
 }
 
 
@@ -125,7 +124,7 @@ sub start_WolfServer
       Reuse => 1
    );
    die "Cannot create socket $!\n" unless $socket;
-   add_to_log("Server wartet auf ISM8i Verbindung auf Port $hash{port}");
+   add_to_log("Server wartet auf ISM8i Verbindung auf Port $hash{port}:");
  
    # waiting for a new client connection
    my $client_socket = $socket->accept();
@@ -134,7 +133,7 @@ sub start_WolfServer
    my $client_address = $client_socket->peerhost();
    $hash{ism8i_ip} = $client_address;
    my $client_port = $client_socket->peerport();
-   add_to_log("Verbindung eines ISM8i Moduls von $client_address:$client_port");
+   add_to_log("   Verbindung eines ISM8i Moduls von $client_address:$client_port");
  
    while(1)
       {
@@ -456,8 +455,7 @@ sub loadConfig
      print $fh "#            Möglich ist 'csv' für das CSV Format (mit Semikolon (;) separiert) z.B. zum Importieren in Tabekkenkalkulationen.\n";
      print $fh "#            Möglich ist 'fhem' als Spezialformat für das ISM8I Modul.\n";
      print $fh "#            Default ist 'fhem'\n";
-     print $fh "######################################################################################################################################################\n";
-     print $fh "\n";
+     print $fh "######################################################################################################################################################\n\n";
 	 
 	 print $fh "ism8i_port $hash{port}\n";
 	 print $fh "fw_version $hash{fw}\n";

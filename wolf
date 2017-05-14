@@ -1,0 +1,33 @@
+#!/bin/sh
+# description: Start or stop the Wolf ISM8i server
+# script by Dr. Mugur Dietrich
+
+cd /opt/wolf
+
+# Carry out specific functions when asked to by the system
+case "$1" in
+  'start')
+    echo "Starting Wolf ISM8i server"
+    perl wolf_ism8i.pl
+    RETVAL=$?
+    ;;
+  'stop')
+    echo "Stopping Wolf ISM8i server"
+    pkill -U wolf perl
+    RETVAL=$?
+    ;;
+  'status')
+    cnt=`ps -ef | grep "wolf_ism8i.pl" | grep -v grep | wc -l`
+    if [ "$cnt" -eq "0" ] ; then
+        echo "Wolf ISM8i server is not running"
+    else
+        echo "Wolf ISM8i server is running"
+    fi
+    ;;
+  *)
+    echo "Usage: /etc/init.d/wolf {start|stop|status}"
+    exit 1
+    ;;
+esac
+
+exit $RETVAL
