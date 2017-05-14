@@ -54,7 +54,7 @@ sub socket_disconnect($);
 ###############################################################
 sub ISM8I_Initialize($) {
   my ($hash) = @_;
-  my $name= $hash->{NAME};
+  my $name = $hash->{NAME};
 
   $hash->{ReadFn}     = "ISM8I_Read";
   $hash->{DefFn}      = "ISM8I_Define";
@@ -76,7 +76,7 @@ sub ISM8I_Initialize($) {
 ###############################################################
 sub ISM8I_Define($$) {
   my ($hash, $def) = @_;
-  my $name= $hash->{NAME};
+  my $name = $hash->{NAME};
   
   $hash->{HELPER}{LASTUPDATE}    = time();
   $hash->{HELPER}{DEFAULT_IP}    = '239.7.7.77';
@@ -249,21 +249,33 @@ sub ISM8I_Read($) {
   
   return unless $socket->recv($data, 1024); # Liest verarbeitete Wolf ISM8i Daten von Multicast Quelle.
   
-  if ( length($data) > 0) {
+  if ( length($data) > 0 and $data !~ m/^\d{1,3}\;.*\;.*/) {
      Log3 ($name, 5, $name." received: ".$data);
 	 
 	 @fields = split(/ /, l_r_dbl_trim($data));
 	 $ignores = AttrVal($name, "ignoreDatapoints", "");
+	 $t = 0;
 
 	 if (scalar(@fields) == 2) {
-	   if (length($ignores) <= 0) {
-          readingsSingleUpdate($hash, "$fields[0]", "$fields[1]", 1); 
-	   } else {
-	      @dp_fields = split(/\./, $fields[0]);
-		  if (scalar(@dp_fields) >= 3) {
-             $dp_number = " $dp_fields[0] ";
-	         Log3 ($name, 5, "Checking Ignore: *$dp_number* not in * $ignores * -> ".(" $ignores " !~ m/\Q$dp_number/));
-	         if (" $ignores " !~ m/\Q$dp_number/) { readingsSingleUpdate($hash, "$fields[0]", "$fields[1]", 1); }
+       if ($fields[0] eq "ISM8i.997.IP") {
+		  $hash->{WOLF_IP} = $fields[1];
+		  $t = 1;
+	   } elsif ($fields[0] eq "ISM8i.998.Port") {
+		  $hash->{WOLF_COMPORT} = $fields[1];
+		  $t = 1;
+	   } elsif ($fields[0] eq "ISM8i.999.Firmware") {
+		  $hash->{WOLF_FIRMWARE} = $fields[1];
+		  $t = 1;
+	   }
+	   if ($t == 0) {	   
+	      if (length($ignores) <= 0) {
+             readingsSingleUpdate($hash, "$fields[0]", "$fields[1]", 1); 
+	      } else {
+	         @dp_fields = split(/\./, $fields[0]);
+		     if (scalar(@dp_fields) >= 3) {
+ 	            Log3 ($name, 5, "Checking Ignore: *$dp_number* not in * $ignores * -> ".(" $ignores " !~ m/\Q$dp_number/));
+	            if (" $ignores " !~ m/\Q$dp_number/) { readingsSingleUpdate($hash, "$fields[0]", "$fields[1]", 1); }
+			 }
 		  }
 	   }
 	 
@@ -324,7 +336,9 @@ sub find_reading_on_dp($$) {
   my ($hash, $find) = @_;
   if ($find !~ m/^\d{1,3}$/) { return undef; }
   
-  my $regx = "^$find\\..*";
+  #my $regx = "^$find\\..*"; 
+  my $regx = "^.*\\.$find\\..*"; # /^.*\.\d{1,3}\..*/
+
   my $r;
   
   foreach $r ( keys $hash->{READINGS} ) { 
@@ -455,12 +469,12 @@ sub socket_connect($) {
 	Die empfangenen Daten sind follgendermaßen aufgebaut:
 	<br><br>
 	Es wird ein String empfangen der aus verschiedenen Bestandteilen besteht die mit einem Punkt (.) verbunden sind.<br>
-	Das sieht z.B. so aus: <b>1.Heizgeraet_1_TOB_CGB_2_MGK_2.Stoerung</b> oder <b>115.Mischermodul_1.Warmwassertemperatur.C</b>.
+	Das sieht z.B. so aus: <b>Heizgeraet_1_TOB_CGB_2_MGK_2.1.Stoerung</b> oder <b>Mischermodul_1.115.Warmwassertemperatur.C</b>.
 	<br><br>
 	Die Bedeutung der einzelnen Bestandteile ist:<br>
 	<ul>
-    <li>Teil 1 : Die Nummer/ID das Datenpunkts. </li>
-    <li>Teil 2 : Die Bezeichnung des Gerätes welches die Daten schickt. </li>
+    <li>Teil 1 : Die Bezeichnung des Gerätes welches die Daten schickt. </li>
+    <li>Teil 2 : Die Nummer/ID das Datenpunkts. </li>
     <li>Teil 3 : Der Bestandteil des Gesrätes welches die Daten schickt. </li>
     <li>Teil 4 : Die Einheit des übertragenen Wertes. Teil 4 ist optional ung kommt nicht bei allen Datenpnkten vor.<br>
                  Die Bedeutung der Enheiten lautet: C = °C, proz = %, Pa = Pascal, l_h = Liter/Stunde, m3_h = Kubikmeter/Stunde etc.</li> 
