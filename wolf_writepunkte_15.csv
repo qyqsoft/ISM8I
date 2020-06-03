@@ -1,0 +1,76 @@
+#ID; Datenpunkt Gerät; Datenpunkt Name; Einheit; Wertebereich; Schrittweite
+#
+194;Systembedienmodul;1x Warmwasserladung (gobal);-;0-1;1
+#
+56;Direkter Heizkreis + direktes Warmwasser;Warmwassersolltemperatur;°C;20-80;1
+69;Mischerkreis 1 + Warmwasser 1;Warmwassersolltemperatur;°C;20-80;1
+82;Mischerkreis 2 + Warmwasser 2;Warmwassersolltemperatur;°C;20-80;1
+95;Mischerkreis 3 + Warmwasser 3;Warmwassersolltemperatur;°C;20-80;1
+57;Direkter Heizkreis + direktes Warmwasser;Programmwahl Heizkreis;-;0-3;1
+70;Mischerkreis 1 + Warmwasser 1;Programmwahl Mischer;-;0-3;1
+83;Mischerkreis 2 + Warmwasser 2;Programmwahl Mischer;-;0-3;1
+96;Mischerkreis 3 + Warmwasser 3;Programmwahl Mischer;-;0-3;1
+58;Direkter Heizkreis + direktes Warmwasser;Programmwahl Warmwasser;-;0/2/4;-
+71;Mischerkreis 1 + Warmwasser 1;Programmwahl Warmwasser;-;0/2/4;-
+84;Mischerkreis 2 + Warmwasser 2;Programmwahl Warmwasser;-;0/2/4;-
+97;Mischerkreis 3 + Warmwasser 3;Programmwahl Warmwasser;-;0/2/4;-
+59;Direkter Heizkreis + direktes Warmwasser;Heizkreis Zeitprogramm 1;-;0-1;1
+72;Mischerkreis 1 + Warmwasser 1;Mischer Zeitprogramm 1;-;0-1;1
+85;Mischerkreis 2 + Warmwasser 2;Mischer Zeitprogramm 1;-;0-1;1
+98;Mischerkreis 3 + Warmwasser 3;Mischer Zeitprogramm 1;-;0-1;1
+60;Direkter Heizkreis + direktes Warmwasser;Heizkreis Zeitprogramm 2;-;0-1;1
+73;Mischerkreis 1 + Warmwasser 1;Mischer Zeitprogramm 2;-;0-1;1
+86;Mischerkreis 2 + Warmwasser 2;Mischer Zeitprogramm 2;-;0-1;1
+99;Mischerkreis 3 + Warmwasser 3;Mischer Zeitprogramm 2;-;0-1;1
+61;Direkter Heizkreis + direktes Warmwasser;Heizkreis Zeitprogramm 3;-;0-1;1
+74;Mischerkreis 1 + Warmwasser 1;Mischer Zeitprogramm 3;-;0-1;1
+87;Mischerkreis 2 + Warmwasser 2;Mischer Zeitprogramm 3;-;0-1;1
+100;Mischerkreis 3 + Warmwasser 3;Mischer Zeitprogramm 3;-;0-1;1
+62;Direkter Heizkreis + direktes Warmwasser;Warmwasser Zeitprogramm 1;-;0-1;1
+75;Mischerkreis 1 + Warmwasser 1;Warmwasser Zeitprogramm 1;-;0-1;1
+88;Mischerkreis 2 + Warmwasser 2;Warmwasser Zeitprogramm 1;-;0-1;1
+101;Mischerkreis 3 + Warmwasser 3;Warmwasser Zeitprogramm 1;-;0-1;1
+63;Direkter Heizkreis + direktes Warmwasser;Warmwasser Zeitprogramm 2;-;0-1;1
+76;Mischerkreis 1 + Warmwasser 1;Warmwasser Zeitprogramm 2;-;0-1;1
+89;Mischerkreis 2 + Warmwasser 2;Warmwasser Zeitprogramm 2;-;0-1;1
+102;Mischerkreis 3 + Warmwasser 3;Warmwasser Zeitprogramm 2;-;0-1;1
+64;Direkter Heizkreis + direktes Warmwasser;Warmwasser Zeitprogramm 3;-;0-1;1
+77;Mischerkreis 1 + Warmwasser 1;Warmwasser Zeitprogramm 3;-;0-1;1
+90;Mischerkreis 2 + Warmwasser 2;Warmwasser Zeitprogramm 3;-;0-1;1
+103;Mischerkreis 3 + Warmwasser 3;Warmwasser Zeitprogramm 3;-;0-1;1
+65;Direkter Heizkreis + direktes Warmwasser;Sollwertkorrektur;K;m4-4;0.5
+78;Mischerkreis 1 + Warmwasser 1;Sollwertkorrektur;K;m4-4;0.5
+91;Mischerkreis 2 + Warmwasser 2;Sollwertkorrektur;K;m4-4;0.5
+104;Mischerkreis 3 + Warmwasser 3;Sollwertkorrektur;K;m4-4;0.5
+66;Direkter Heizkreis + direktes Warmwasser;Sparfaktor;K;0-10;0.5
+79;Mischerkreis 1 + Warmwasser 1;Sparfaktor;K;0-10;0.5
+92;Mischerkreis 2 + Warmwasser 2;Sparfaktor;K;0-10;0.5
+105;Mischerkreis 3 + Warmwasser 3;Sparfaktor;K;0-10;0.5
+#
+149;CWL Excellent;Programm;-;0/1/3;-
+150;CWL Excellent;Zeitprogramm 1;-;0-1;1
+151;CWL Excellent;Zeitprogramm 2;-;0-1;1
+152;CWL Excellent;Zeitprogramm 3;-;0-1;1
+153;CWL Excellent;Zeitweise Intensivlüftung AN/AUS;-;0-1;1
+154;CWL Excellent;Zeitweise Intensivlüftung Startdatum;-;-;Tag
+155;CWL Excellent;Zeitweise Intensivlüftung Enddatum;-;-;Tag
+156;CWL Excellent;Zeitweise Intensivlüftung Startzeit;-;-;Minute
+157;CWL Excellent;Zeitweise Intensivlüftung Endzeit;-;-;Minute
+158;CWL Excellent;Zeitweiser Feuchteschutz AN/AUS;-;0-1;1
+159;CWL Excellent;Zeitweiser Feuchteschutz Startdatum;-;-;Tag
+160;CWL Excellent;Zeitweiser Feuchteschutz Enddatum;-;-;Tag
+161;CWL Excellent;Zeitweiser Feuchteschutz Startzeit;-;-;Minute
+162;CWL Excellent;Zeitweiser Feuchteschutz Endzeit;-;-;Minute
+193;CWL Excellent;Filterwarnung zurücksetzen;-;0-1;1
+#
+198;Heizgerät 1 (TOB,CGB-2,MGK-2);Leistungsvorgabe;%;0-100;1
+201;Heizgerät 2 (TOB,CGB-2,MGK-2);Leistungsvorgabe;%;0-100;1
+204;Heizgerät 3 (TOB,CGB-2,MGK-2);Leistungsvorgabe;%;0-100;1
+207;Heizgerät 4 (TOB,CGB-2,MGK-2);Leistungsvorgabe;%;0-100;1
+199;Heizgerät 1 (TOB,CGB-2,MGK-2);Kesselsolltemperaturvorgabe;°C;0-100;1
+202;Heizgerät 2 (TOB,CGB-2,MGK-2);Kesselsolltemperaturvorgabe;°C;0-100;1
+205;Heizgerät 3 (TOB,CGB-2,MGK-2);Kesselsolltemperaturvorgabe;°C;0-100;1
+208;Heizgerät 4 (TOB,CGB-2,MGK-2);Kesselsolltemperaturvorgabe;°C;0-100;1
+#
+209;Kaskadenmodul;Gesamtmodulationsgradvorgabe;%;0-100;1
+210;Kaskadenmodul;Sammlersolltemperaturvorgabe;°C;0-100;1
