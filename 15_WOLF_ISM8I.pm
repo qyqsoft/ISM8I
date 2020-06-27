@@ -47,6 +47,7 @@ sub enqueReadings($$);
 sub decodeThreadTelegram($@);
 sub sendToThread($$);
 sub countWolfReadings($);
+sub deleteIgnores($);
 sub loadDatenpunkte;
 sub loadSetter;
 sub getSetterWidget($$);
@@ -157,6 +158,8 @@ sub WOLF_ISM8I_Define($$)
   }
   $hash->{clients} = {};
   $hash->{retain} = {};
+
+  deleteIgnores($hash);
 
   return $ret;
 }
@@ -515,7 +518,7 @@ sub TcpCommunicationThread
     $ret_read = sysread($client_socket, $data, 50000); # <<<=== HIER WERDEN DIE DATAGRAMME GELESEN !!!
 	
 	#Telegramm beantworten und weiterverarbeiten:
-    if ($ret_read > 0) {
+    if (defined($ret_read) and defined($data) and length($data) > 0) {
        Log3 $name, 5, "$name: data read -------> ".dataToHex($data);
        
 	   @answers = @{ create_answer($name, $data) };
@@ -549,10 +552,13 @@ sub TcpCommunicationThread
 	   $fwhash->{DeviceName} = $forewardAddress; 
 	   my $err = DevIo_OpenDev($fwhash, undef,  undef, undef);
 			
-	   if (!defined($err)) { 
+	   if (defined($err)) { 
+          Log3 $name, 3, "$name: Foreward error: $err";
+       } else {
 	      my $epoc = time();
 	      do { } until (DevIo_IsOpen($fwhash) or (time() - $epoc >= 2)); # Wartet auf offene Verbindung oder bricht nach 2 Sekunden ab.
 	      if (DevIo_IsOpen($fwhash)) {
+             Log3 $name, 5, "$name: Foreward IO-Objekt: ". DevIo_IsOpen($fwhash);
 	         DevIo_SimpleWrite($fwhash, $data, 0); 
 	         DevIo_CloseDev($fwhash);
 	      }
@@ -562,6 +568,7 @@ sub TcpCommunicationThread
     #Daten aus dem Haupt-Thread verarbeiten:
     while ($sendToThreadQueue->pending() > 0) {
         $deq = $sendToThreadQueue->dequeue_nb();
+        if (!defined($deq)) { $deq = " $qSplitter $qSplitter "; }
         @deqfields = split(/$qSplitter/, $deq);
 	 
 	    if (scalar(@deqfields) == 2) { 
@@ -578,8 +585,6 @@ sub TcpCommunicationThread
     } 
   }
 
-  DevIo_CloseDev($hash); # Foreward Schliessen.
-  
   shutdown($client_socket, 2);
   $client_socket->close(); 
   delete($selectlist{$nhash->{NAME}});
@@ -694,7 +699,7 @@ sub decodeThreadTelegram($@)
    return if (length($data) <=0);
 
    my @datafields = @{ splitTelegrams($data) };
-   my ($telegram, @h, $FrameSize, $MainService, $SubService, $StartDatapoint, $NumberOfDatapoints, $Position);
+   my ($telegram, @h, $FrameSize, $MainService, $SubService, $StartDatapoint, $NumberOfDatapoints, $Position, $ignores, @ignore_dp, %ign_params);
    my ($n, $DP_ID, $DP_command, $DP_length, $v, $reading, $wert, $i, $DP_value, $auswertung, $last_auswertung, @fields, $ts, $rc); 
 
    while (scalar(@datafields) > 0) {
@@ -716,7 +721,10 @@ sub decodeThreadTelegram($@)
          $StartDatapoint = hex($h[12].$h[13]);
          $NumberOfDatapoints = hex($h[14].$h[15]);
 	     $Position = 0;
-	  
+	     $ignores = AttrVal($name, "ignoreDatapoints", "1000 1001 1002");
+         @ignore_dp = split(/ /, $ignores);
+         %ign_params = map { $_ => 1 } @ignore_dp;
+
 	     for ($n=1; $n <= $NumberOfDatapoints; $n++) {
             $DP_ID = hex($h[$Position + 16].$h[$Position + 17]);
             $DP_command = hex($h[$Position + 18]);
@@ -728,20 +736,24 @@ sub decodeThreadTelegram($@)
             for ($i=0; $i <= $DP_length - 1; $i++) { $v .= $h[$Position + 20 + $i]; }
             $DP_value = hex($v);
 	        $auswertung = time.";".getCsvResult($DP_ID, $DP_value);
-		 
+
 		    if ($auswertung ne $last_auswertung) {
 		   	   $last_auswertung = $auswertung;
 			 
 			   @fields = split(/;/, $auswertung); # DP_ID [1]; Gerät [2]; Erignis [3]; Out/In [4]; Wert [5]; Einheit [6] (falls vorhanden)
-			 
-			   # Auswertung für FHEM erstellen 
-	           $reading = getFhemFriendly($fields[2]).".".$fields[1].".".$fields[4].".".getFhemFriendly($fields[3]); # Geraet . DP ID . Out/In . Datenpunkt
-			   if (scalar(@fields) == 7) { $reading .= ".".getFhemFriendly($fields[6]); } # Einheit (wenn vorhanden)
-			   $wert = $fields[5]; # Wert (nach Leerstelle!)
+     
+			   if (!exists($ign_params{$fields[1]})) {  # <- ignoreDatapoints beachten
+			      # Auswertung für FHEM erstellen 
+	              $reading = getFhemFriendly($fields[2]).".".$fields[1].".".$fields[4].".".getFhemFriendly($fields[3]); # Geraet . DP ID . Out/In . Datenpunkt
+			      if (scalar(@fields) == 7) { $reading .= ".".getFhemFriendly($fields[6]); } # Einheit (wenn vorhanden)
+			      $wert = $fields[5]; # Wert (nach Leerstelle!)
 			
-			   # !!! Hier wird das decodierte Telegramm mit Wert hinzugefügt:
-               enqueReadings($reading, $wert);
-			   Log3 $name, 5, "$name: telegram result ->    $reading = $wert";
+			      # !!! Hier wird das decodierte Telegramm mit Wert hinzugefügt:
+                  enqueReadings($reading, $wert);
+			      Log3 $name, 5, "$name: telegram result ->    $reading = $wert";
+               } else {
+			      Log3 $name, 5, "$name: telegram id $fields[1] ignored -> $reading = $wert";
+               }
 		    }
 		    $Position += 4 + $DP_length;
 	     }
@@ -760,12 +772,17 @@ sub decodeThreadTelegram($@)
 sub enqueReadings($$)
 {
   my ($reading, $value) = @_;
+  return if (!defined($reading) and !defined($value));
+
+  if (!defined($reading)) { $reading = "_UNDEFINED"; }
+  if (!defined($value)) { $value = "UNDEFINED"; }
+
   $dataQueue->enqueue(join($qSplitter, $reading, $value));
 }
 
 
 ###############################################################
-#                  enqueReadings
+#                  sendToThread
 ###############################################################
 #Sendet Daten an den Server-Thread. 
 #Möglichkeiten:
@@ -799,6 +816,23 @@ sub countWolfReadings($)
   }
 	
   return $c;
+}
+
+
+###############################################################
+#                  deleteIgnores
+###############################################################
+sub deleteIgnores($)
+{
+   my $hash = shift;
+   my $name = $hash->{NAME};
+   my $ignores = AttrVal($name, "ignoreDatapoints", "");
+   my @datapoints = split(/ /, $ignores);
+
+   foreach my $dp (@datapoints) { 
+      my $reading = find_reading_on_dp($hash, $dp);
+      if ( defined($reading) ) { fhem("deletereading $name $reading");; }
+   }
 }
 
 
