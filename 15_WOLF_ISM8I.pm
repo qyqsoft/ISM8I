@@ -568,6 +568,8 @@ sub TcpCommunicationThread
     #Daten aus dem Haupt-Thread verarbeiten:
     while ($sendToThreadQueue->pending() > 0) {
         $deq = $sendToThreadQueue->dequeue_nb();
+	    Log3 ($name, 5, "$name: sendToThreadQueue->dequeue: ".dataToHex($deq));
+
         if (!defined($deq)) { $deq = " $qSplitter $qSplitter "; }
         @deqfields = split(/$qSplitter/, $deq);
 	 
@@ -578,8 +580,8 @@ sub TcpCommunicationThread
 	       if ($qcommand eq "forewardAddress") { $forewardAddress = $qvalue; }
 	       if ($qcommand eq "sendDatagramm") { 
 		      syswrite($client_socket, $qvalue); 
-			  Log3 ($name, 5, "Datagramm transmited: ".dataToHex($qvalue));
-              if ($showDebug) { enqueReadings("_DBG_DEND_DATAGRAMM_DATA", dataToHex($qvalue)); }
+			  Log3 ($name, 3, "$name: Datagramm transmited -> ".dataToHex($qvalue));
+              if ($showDebug) { enqueReadings("_DBG_SEND_DATAGRAMM_DATA", dataToHex($qvalue)); }
 		   }
 	    } 
     } 
@@ -591,7 +593,6 @@ sub TcpCommunicationThread
   delete($nhash->{FD});
   
   enqueReadings("state", "Diconnected");
-
 	
   # Client has exited so thread should exit too
   threads->exit();
