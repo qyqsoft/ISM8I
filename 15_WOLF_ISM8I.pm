@@ -1356,11 +1356,16 @@ sub convert_DptFloatToNumber($)
    
    if ($val == 0x7fff) { return "invalid"; }
    
+   my $sign = ($val & 0x8000) >> 15;
    my $mantisse = $val & 0x07ff;
    my $exponent = ($val & 0x7800) >> 11;
-   if ($val & 0x8000) { $mantisse = ~$mantisse; } # negative number in two complement
+
+   if ($sign != 0) { $mantisse = -(~($mantisse - 1) & 0x07ff); } 
+   #if ($val & 0x8000) { $mantisse = ~$mantisse; } # negative number in two complement
    
-   return ($mantisse * 0.01) * (2 ** $exponent);
+   #return ($mantisse * 0.01) * (2 ** $exponent);
+   return (1 << $exponent) * 0.01 * $mantisse;
+
 }
 
 ###############################################################
