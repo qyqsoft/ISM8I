@@ -33,58 +33,58 @@ sub WOLF_ISM8I_Attr($@);
 
 sub WOLF_ISM8I_TimeoutFunction($); 
 
-sub TcpServerOpen($$);
-sub TcpServerAccept($$);
-sub TcpServerClose($@);
-sub ClientSocketClose($);
-sub TcpCommunicationThread;
-sub TimerStartOrUpdate($);
-sub TimerKill($);
+sub _ISM8I_TcpServerOpen($$);
+sub _ISM8I_TcpServerAccept($$);
+sub _ISM8I_TcpServerClose($@);
+sub _ISM8I_ClientSocketClose($);
+sub _ISM8I_TcpCommunicationThread;
+sub _ISM8I_TimerStartOrUpdate($);
+sub _ISM8I_TimerKill($);
 
-sub create_answer($@);
-sub dataToHex($);
-sub enqueReadings($$);
-sub decodeThreadTelegram($@);
-sub sendToThread($$);
-sub countWolfReadings($);
-sub deleteIgnores($);
-sub loadDatenpunkte;
-sub loadSetter;
-sub getSetterWidget($$);
-sub dec2ip($);
-sub ip2dec($);
-sub r_trim;
-sub l_trim;
-sub all_trim;
-sub dbl_trim;
-sub l_r_dbl_trim;
-sub find_reading_on_dp($$); 
+sub _ISM8I_create_answer($@);
+sub _ISM8I_dataToHex($);
+sub _ISM8I_enqueReadings($$);
+sub _ISM8I_decodeThreadTelegram($@);
+sub _ISM8I_sendToThread($$);
+sub _ISM8I_countWolfReadings($);
+sub _ISM8I_deleteIgnores($);
+sub _ISM8I_loadDatenpunkte;
+sub _ISM8I_loadSetter;
+sub _ISM8I_getSetterWidget($$);
+sub _ISM8I_dec2ip($);
+sub _ISM8I_ip2dec($);
+sub _ISM8I_r_trim;
+sub _ISM8I_l_trim;
+sub _ISM8I_al_l_trim;
+sub _ISM8I_db_l_trim;
+sub _ISM8I_l_r_db_l_trim;
+sub _ISM8I_find_reading_on_dp($$); 
 
-sub getFhemFriendly($);
-sub getFhemInOut($);
-sub getDatenpunkt($$);
-sub getCsvResult($$);
+sub _ISM8I_getFhemFriendly($);
+sub _ISM8I_getFhemInOut($);
+sub _ISM8I_getDatenpunkt($$);
+sub _ISM8I_getCsvResult($$);
 
-sub codeSetting($$);
-sub codeValueByType($$);
-sub convert_NumberToChars($$);
-sub getLen($);
+sub _ISM8I_codeSetting($$);
+sub _ISM8I_codeValueByType($$);
+sub _ISM8I_convert_NumberToChars($$);
+sub _ISM8I_getLen($);
 
-sub convert_DptFloatToNumber($);
-sub convert_NumberToDptFloat($);
-sub convert_DptLongToNumber($);
-sub convert_DptScalingToNumber($);
-sub convert_NumberToDptScaling($);
+sub _ISM8I_convert_DptFloatToNumber($);
+sub _ISM8I_convert_NumberToDptFloat($);
+sub _ISM8I_convert_DptLongToNumber($);
+sub _ISM8I_convert_DptScalingToNumber($);
+sub _ISM8I_convert_NumberToDptScaling($);
 
-sub convert_DptTimeToString($);
-sub convert_StringToDptTime_DayOnly($);
-sub convert_StringToDptTime_TimeOnly($);
-sub convert_DptDateToString($);
-sub convert_StringToDptDate($);
+sub _ISM8I_convert_DptTimeToString($);
+sub _ISM8I_convert_StringToDptTime_DayOnly($);
+sub _ISM8I_convert_StringToDptTime_TimeOnly($);
+sub _ISM8I_convert_DptDateToString($);
+sub _ISM8I_convert_StringToDptDate($);
 
-sub getBitweise($$$);
-sub setBitwise($$$);
-sub getByteweise($$);
+sub _ISM8I_getBitweise($$$);
+sub _ISM8I_setBitwise($$$);
+sub _ISM8I_getByteweise($$);
 
 
 ###############################################################
@@ -96,7 +96,7 @@ my @writepunkte;
 my %sets;
 my @clients = ();
 my $dataQueue = Thread::Queue->new();
-my $sendToThreadQueue = Thread::Queue->new();
+my $_ISM8I_sendToThreadQueue = Thread::Queue->new();
 my $qSplitter = chr(0x02).chr(0x03).chr(0x04);
 
  
@@ -130,8 +130,8 @@ sub WOLF_ISM8I_Initialize($)
   use warnings 'qw';
   $hash->{AttrList} = join(" ", @attrList)." ".$readingFnAttributes;
  
-  loadDatenpunkte; # Läd ./FHEM/wolf_datenpunkte_15.csv
-  loadSetter; # Läd ./FHEM/wolf_writepunkte_15.csv
+  _ISM8I_loadDatenpunkte; # Läd ./FHEM/wolf_datenpunkte_15.csv
+  _ISM8I_loadSetter; # Läd ./FHEM/wolf_writepunkte_15.csv
 }
 
 
@@ -149,7 +149,7 @@ sub WOLF_ISM8I_Define($$)
   if (AttrVal($name, "event-on-change-reading", "empty") eq "empty") { $attr{$name}{"event-on-change-reading"} = ".*"; }
 
   WOLF_ISM8I_Undef($hash, undef) if($hash->{OLDDEF}); # modify
-  my $ret = TcpServerOpen($hash, $port);
+  my $ret = _ISM8I_TcpServerOpen($hash, $port);
 
   # Make sure that fhem only runs once
   if($ret && !$init_done) {
@@ -159,7 +159,7 @@ sub WOLF_ISM8I_Define($$)
   $hash->{clients} = {};
   $hash->{retain} = {};
 
-  deleteIgnores($hash);
+  _ISM8I_deleteIgnores($hash);
 
   return $ret;
 }
@@ -177,9 +177,9 @@ sub WOLF_ISM8I_Undef($@)
       if( $_->is_joinable() ) { $_->join(); } 
    }
 
-   TimerKill($hash);
+   _ISM8I_TimerKill($hash);
 
-   my $ret = TcpServerClose($hash);
+   my $ret = _ISM8I_TcpServerClose($hash);
    my $sname = $hash->{SNAME};
    return undef if(!$sname);
 
@@ -199,12 +199,12 @@ sub WOLF_ISM8I_Read($)
    my $name = $hash->{NAME};
    
    if (ReadingsVal($name, "_WOLF_READINGS_COUNT", 0) == 0) {
-      readingsSingleUpdate($hash, "_WOLF_READINGS_COUNT", countWolfReadings($hash), 1);
+      readingsSingleUpdate($hash, "_WOLF_READINGS_COUNT", _ISM8I_countWolfReadings($hash), 1);
    }
 
    if( $hash->{SERVERSOCKET} ) { 
-     TimerStartOrUpdate($hash);
-     push ( @clients, threads->create(\&TcpCommunicationThread, $hash) );
+     _ISM8I_TimerStartOrUpdate($hash);
+     push ( @clients, threads->create(\&_ISM8I_TcpCommunicationThread, $hash) );
      foreach ( @clients ) { if( $_->is_joinable() ) { $_->join(); } }
    }
 	
@@ -240,7 +240,7 @@ sub WOLF_ISM8I_TimeoutFunction($)
    if ($upd == 1) { 
       # Anzahl der Wolf Readings ermitteln und ggf aktualisieren:
 	  $rc = ReadingsVal($name, "_WOLF_READINGS_COUNT", 0);
-	  $nc = countWolfReadings($hash);
+	  $nc = _ISM8I_countWolfReadings($hash);
 	  if ($nc != $rc) { 
 	     readingsSingleUpdate($hash, "_WOLF_READINGS_COUNT", "$nc", 1); 
 	  }
@@ -251,7 +251,7 @@ sub WOLF_ISM8I_TimeoutFunction($)
 	  }
    }
   
-   TimerStartOrUpdate($hash); # hier am Ende stehen lassen!!!
+   _ISM8I_TimerStartOrUpdate($hash); # hier am Ende stehen lassen!!!
 }
 
 
@@ -270,11 +270,11 @@ sub WOLF_ISM8I_Set($@)
    return "Unknown argument '$cmd', choose one of $settings" unless (index($settings, $cmd) >= 0);
 
    if ($id > 0 and defined($arg)) {
-      my $val = codeSetting($id, $arg);
+      my $val = _ISM8I_codeSetting($id, $arg);
       if (length($val) > 0) { 
          Log3 ($name, 5, "WOLF_ISM8I_Set: cmd -> $cmd / id -> $id / arg -> $arg");
-         Log3 ($name, 5, "send telegram -> ".dataToHex($val));
-         sendToThread("sendDatagramm", $val); 
+         Log3 ($name, 5, "send telegram -> "._ISM8I_dataToHex($val));
+         _ISM8I_sendToThread("sendDatagramm", $val); 
 	  }
    }
 }
@@ -298,12 +298,12 @@ sub WOLF_ISM8I_Get($$@)
    }
    elsif ($opt eq "GetAllData") {
       my $getAll = chr(0x06).chr(0x20).chr(0xf0).chr(0x80).chr(0x00).chr(0x16).chr(0x04).chr(0x00).chr(0x00).chr(0x00).chr(0xf0).chr(0xd0);
-      sendToThread("sendDatagramm", $getAll); 
+      _ISM8I_sendToThread("sendDatagramm", $getAll); 
    }
    elsif($opt eq "Reconnect") {
 	  my $port = $hash->{PORT};
       WOLF_ISM8I_Undef($hash, undef);
-      TcpServerOpen($hash, $port);
+      _ISM8I_TcpServerOpen($hash, $port);
    }
    else {
 	 return "Unknown argument $opt, choose one of " . join(" ", keys %gets)
@@ -330,7 +330,7 @@ sub WOLF_ISM8I_Attr($@)
   # $aName / $aVal sind Attribut-Name und Attribut-Wert
   
   if ($aName eq "ignoreDatapoints" and length($aVal) > 0) {
-	  $_[3] = l_r_dbl_trim($aVal); # Alle doppelte Leerzeichen/Tabs entfernen.
+	  $_[3] = _ISM8I_l_r_db_l_trim($aVal); # Alle doppelte Leerzeichen/Tabs entfernen.
       $aVal = $_[3]; 
 	  Log3 ($name, 5, "Ignore Attribute: $aVal");
 
@@ -343,7 +343,7 @@ sub WOLF_ISM8I_Attr($@)
       if ($cmd eq "set" and $i > 0) {
 	      readingsSingleUpdate($hash, "_WOLF_IGNORES_COUNT", "$i", 1); # Anzahl der Ignores angeben
 		  foreach $dp (@datapoints) { 
-            $reading = find_reading_on_dp($hash, $dp);
+            $reading = _ISM8I_find_reading_on_dp($hash, $dp);
 			if ( defined($reading) ) { fhem("deletereading $name $reading");; }
 		  }
       } elsif ($cmd eq "del") {
@@ -354,17 +354,17 @@ sub WOLF_ISM8I_Attr($@)
   if ($aName eq "showDebugData") {
      if (($cmd eq "set" and $aVal == 0) or $cmd eq "del"){ 
 	    fhem("deletereading $name _DBG.*");
-		sendToThread("showDebugData", 0);
+		_ISM8I_sendToThread("showDebugData", 0);
 	 }
   }
   
   if ($aName eq "forewardAddress") {
 	 if ($cmd eq "set" and length($aVal) > 0) {
-	    $_[3] = all_trim($aVal); # Alle Whitespaces entfernen.
+	    $_[3] = _ISM8I_al_l_trim($aVal); # Alle Whitespaces entfernen.
         $aVal = $_[3]; 
-        sendToThread("forewardAddress", $aVal);
+        _ISM8I_sendToThread("forewardAddress", $aVal);
       } elsif ($cmd eq "del") {
-		sendToThread("forewardAddress", "none");
+		_ISM8I_sendToThread("forewardAddress", "none");
 	  }
   }
   
@@ -376,9 +376,9 @@ sub WOLF_ISM8I_Attr($@)
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ###############################################################
-#                  TcpServerOpen
+#                  _ISM8I_TcpServerOpen
 ###############################################################
-sub TcpServerOpen($$)
+sub _ISM8I_TcpServerOpen($$)
 {
   my ($hash, $port) = @_;
   my $name = $hash->{NAME};
@@ -410,9 +410,9 @@ sub TcpServerOpen($$)
 
 
 ###############################################################
-#                  TcpServerAccept
+#                  _ISM8I_TcpServerAccept
 ###############################################################
-sub TcpServerAccept($$)
+sub _ISM8I_TcpServerAccept($$)
 {
   my ($hash, $type) = @_;
   my $name = $hash->{NAME};
@@ -457,9 +457,9 @@ sub TcpServerAccept($$)
 
 
 ###############################################################
-#                  TcpServerClose
+#                  _ISM8I_TcpServerClose
 ###############################################################
-sub TcpServerClose($@)
+sub _ISM8I_TcpServerClose($@)
 {
   my ($hash, $dodel) = @_;
   my $name = $hash->{NAME};
@@ -485,15 +485,15 @@ sub TcpServerClose($@)
 
 #**************************************************************
 ###############################################################
-#                  TcpCommunicationThread
+#                  _ISM8I_TcpCommunicationThread
 ###############################################################
 #**************************************************************
-sub TcpCommunicationThread
+sub _ISM8I_TcpCommunicationThread
 {
   my $hash = shift;
   my $name = $hash->{NAME};
   
-  my $nhash = TcpServerAccept($hash, "WOLF_ISM8I");
+  my $nhash = _ISM8I_TcpServerAccept($hash, "WOLF_ISM8I");
   my $client_socket = $nhash->{CD};
   return "Client socked creation failed." if(!$client_socket);
 
@@ -501,7 +501,7 @@ sub TcpCommunicationThread
   my $csname = $client_socket->peerhost().":".$client_socket->peerport();
 
   Log3 $name, 4, "$name: Connected to $csname";
-  enqueReadings("state", "Connected");
+  _ISM8I_enqueReadings("state", "Connected");
 
   my ($data, $ret_read, @fields, $forewardsocket, $answ, @answers, $ret_write, $r, $f_recbuf, $msg);
   my ($deq, @deqfields, $qcommand, $qvalue);
@@ -519,9 +519,9 @@ sub TcpCommunicationThread
 	
 	#Telegramm beantworten und weiterverarbeiten:
     if (defined($ret_read) and defined($data) and length($data) > 0) {
-       Log3 $name, 5, "$name: data read -------> ".dataToHex($data);
+       Log3 $name, 5, "$name: data read -------> "._ISM8I_dataToHex($data);
        
-	   @answers = @{ create_answer($name, $data) };
+	   @answers = @{ _ISM8I_create_answer($name, $data) };
 	   
 	   while (scalar(@answers) > 0) {
 	      $answ = shift(@answers);
@@ -530,20 +530,20 @@ sub TcpCommunicationThread
 	         $ret_write = syswrite($client_socket, $answ);  # <<<=== HIER WERDEN DIE DATAGRAMME QUITTIERT !!!
 		  
              if ($showDebug) {
-                enqueReadings("_DBG_SENT_BYTES", $ret_write);
-                enqueReadings("_DBG_SENT_DATA", dataToHex($answ));
+                _ISM8I_enqueReadings("_DBG_SENT_BYTES", $ret_write);
+                _ISM8I_enqueReadings("_DBG_SENT_DATA", _ISM8I_dataToHex($answ));
 		     }
 		  }
 	   }
 
-       eval { decodeThreadTelegram($name, $data); }; # <<<=== HIER WERDEN DIE DATAGRAMME AUSGEWERTET !!! 'eval' für Fehler abfangen
+       eval { _ISM8I_decodeThreadTelegram($name, $data); }; # <<<=== HIER WERDEN DIE DATAGRAMME AUSGEWERTET !!! 'eval' für Fehler abfangen
 	 }	
 
     if ($showDebug) {
-       enqueReadings("_DBG_SOCKET", $client_socket);
-       enqueReadings("_DBG_CLIENT_ADDRESS", $csname);
-       enqueReadings("_DBG_RECEIVED_BYTES", $ret_read);
-       enqueReadings("_DBG_RECEIVED_DATA", dataToHex($data));
+       _ISM8I_enqueReadings("_DBG_SOCKET", $client_socket);
+       _ISM8I_enqueReadings("_DBG_CLIENT_ADDRESS", $csname);
+       _ISM8I_enqueReadings("_DBG_RECEIVED_BYTES", $ret_read);
+       _ISM8I_enqueReadings("_DBG_RECEIVED_DATA", _ISM8I_dataToHex($data));
     }
 		 
 	#Falls Forewardadresse festgelegt, dann Daten weiterschicken:
@@ -566,9 +566,9 @@ sub TcpCommunicationThread
     } 
 
     #Daten aus dem Haupt-Thread verarbeiten:
-    while ($sendToThreadQueue->pending() > 0) {
-        $deq = $sendToThreadQueue->dequeue_nb();
-	    Log3 ($name, 5, "$name: sendToThreadQueue->dequeue: ".dataToHex($deq));
+    while ($_ISM8I_sendToThreadQueue->pending() > 0) {
+        $deq = $_ISM8I_sendToThreadQueue->dequeue_nb();
+	    Log3 ($name, 5, "$name: _ISM8I_sendToThreadQueue->dequeue: "._ISM8I_dataToHex($deq));
 
         if (!defined($deq)) { $deq = " $qSplitter $qSplitter "; }
         @deqfields = split(/$qSplitter/, $deq);
@@ -580,8 +580,8 @@ sub TcpCommunicationThread
 	       if ($qcommand eq "forewardAddress") { $forewardAddress = $qvalue; }
 	       if ($qcommand eq "sendDatagramm") { 
 		      syswrite($client_socket, $qvalue); 
-			  Log3 ($name, 3, "$name: Datagramm transmited -> ".dataToHex($qvalue));
-              if ($showDebug) { enqueReadings("_DBG_SEND_DATAGRAMM_DATA", dataToHex($qvalue)); }
+			  Log3 ($name, 3, "$name: Datagramm transmited -> "._ISM8I_dataToHex($qvalue));
+              if ($showDebug) { _ISM8I_enqueReadings("_DBG_SEND_DATAGRAMM_DATA", _ISM8I_dataToHex($qvalue)); }
 		   }
 	    } 
     } 
@@ -592,7 +592,7 @@ sub TcpCommunicationThread
   delete($selectlist{$nhash->{NAME}});
   delete($nhash->{FD});
   
-  enqueReadings("state", "Diconnected");
+  _ISM8I_enqueReadings("state", "Diconnected");
 	
   # Client has exited so thread should exit too
   threads->exit();
@@ -605,11 +605,11 @@ sub TcpCommunicationThread
 
 
 ###############################################################
-#                  TimerStartOrUpdate
+#                  _ISM8I_TimerStartOrUpdate
 ###############################################################
 #Startet oder updatet den InternalTimer 
 ###############################################################
-sub TimerStartOrUpdate($) 
+sub _ISM8I_TimerStartOrUpdate($) 
 {
   my ($hash) = @_;
   my $name = $hash->{NAME};
@@ -621,11 +621,11 @@ sub TimerStartOrUpdate($)
 
 
 ###############################################################
-#                  TimerKill
+#                  _ISM8I_TimerKill
 ###############################################################
 #Löscht den InternalTimer 
 ###############################################################
-sub TimerKill($) 
+sub _ISM8I_TimerKill($) 
 {
   my ($hash) = @_;
   RemoveInternalTimer($hash);
@@ -654,12 +654,12 @@ sub splitTelegrams($)
 
 
 ###############################################################
-#                  create_answer
+#                  _ISM8I_create_answer
 ###############################################################
 #Erzeugt ein SetDatapointValue.Res Telegramm das an das ISM8i 
 #zurückgeschickt wird.
 ###############################################################
-sub create_answer($@)
+sub _ISM8I_create_answer($@)
 {
    my ($name, $data) = @_;
  
@@ -677,7 +677,7 @@ sub create_answer($@)
 		   	$answer = pack("H2" x 17, @a);
 			push(@answers, $answer);
    
-            Log3 $name, 5, "$name: created answer -->  ".dataToHex($answer);
+            Log3 $name, 5, "$name: created answer -->  "._ISM8I_dataToHex($answer);
          }
       }
    }
@@ -687,12 +687,12 @@ sub create_answer($@)
 
 
 ###############################################################
-#                  decodeThreadTelegram
+#                  _ISM8I_decodeThreadTelegram
 ###############################################################
 #Telegramme entschlüsseln und die entsprechenden Werte zur 
-#weiteren Entschlüsselung weiterreichen an sub getCsvResult
+#weiteren Entschlüsselung weiterreichen an sub _ISM8I_getCsvResult
 ###############################################################
-sub decodeThreadTelegram($@)
+sub _ISM8I_decodeThreadTelegram($@)
 {
    #my ($name, $telegram) = @_;
    my ($name, $data) = @_;
@@ -736,7 +736,7 @@ sub decodeThreadTelegram($@)
 		 
             for ($i=0; $i <= $DP_length - 1; $i++) { $v .= $h[$Position + 20 + $i]; }
             $DP_value = hex($v);
-	        $auswertung = time.";".getCsvResult($DP_ID, $DP_value);
+	        $auswertung = time.";"._ISM8I_getCsvResult($DP_ID, $DP_value);
 
 		    if ($auswertung ne $last_auswertung) {
 		   	   $last_auswertung = $auswertung;
@@ -745,12 +745,12 @@ sub decodeThreadTelegram($@)
      
 			   if (!exists($ign_params{$fields[1]})) {  # <- ignoreDatapoints beachten
 			      # Auswertung für FHEM erstellen 
-	              $reading = getFhemFriendly($fields[2]).".".$fields[1].".".$fields[4].".".getFhemFriendly($fields[3]); # Geraet . DP ID . Out/In . Datenpunkt
-			      if (scalar(@fields) == 7) { $reading .= ".".getFhemFriendly($fields[6]); } # Einheit (wenn vorhanden)
+	              $reading = _ISM8I_getFhemFriendly($fields[2]).".".$fields[1].".".$fields[4]."."._ISM8I_getFhemFriendly($fields[3]); # Geraet . DP ID . Out/In . Datenpunkt
+			      if (scalar(@fields) == 7) { $reading .= "."._ISM8I_getFhemFriendly($fields[6]); } # Einheit (wenn vorhanden)
 			      $wert = $fields[5]; # Wert (nach Leerstelle!)
 			
 			      # !!! Hier wird das decodierte Telegramm mit Wert hinzugefügt:
-                  enqueReadings($reading, $wert);
+                  _ISM8I_enqueReadings($reading, $wert);
 			      Log3 $name, 5, "$name: telegram result ->    $reading = $wert";
                } else {
 			      Log3 $name, 5, "$name: telegram id $fields[1] ignored -> $reading = $wert";
@@ -764,13 +764,13 @@ sub decodeThreadTelegram($@)
 
 
 ###############################################################
-#                  enqueReadings
+#                  _ISM8I_enqueReadings
 ###############################################################
 #Fügt Reading und Wert einer Queue zu die dann Timer-gesteuert 
 #ausgegeben wird. Dient dazu um die Daten aus den Server Thread
 #in den FHEM Thread zu bekommen.
 ###############################################################
-sub enqueReadings($$)
+sub _ISM8I_enqueReadings($$)
 {
   my ($reading, $value) = @_;
   return if (!defined($reading) and !defined($value));
@@ -783,7 +783,7 @@ sub enqueReadings($$)
 
 
 ###############################################################
-#                  sendToThread
+#                  _ISM8I_sendToThread
 ###############################################################
 #Sendet Daten an den Server-Thread. 
 #Möglichkeiten:
@@ -791,20 +791,20 @@ sub enqueReadings($$)
 #   command = 'showDebug' -> value = 'Inhalt der Attributs showDebug'
 #   command = 'forewardAddress' -> value = 'Inhalt der Attributs forewardAddress'
 ###############################################################
-sub sendToThread($$)
+sub _ISM8I_sendToThread($$)
 {
   my ($command, $value) = @_;
-  $sendToThreadQueue->enqueue(join($qSplitter, $command, $value));
+  $_ISM8I_sendToThreadQueue->enqueue(join($qSplitter, $command, $value));
 }
 
 
 ###############################################################
-#                  countWolfReadings
+#                  _ISM8I_countWolfReadings
 ###############################################################
 #Zählt alle ISM8i Readings. Debug und Status werden nicht 
 #berücksichtigt.
 ###############################################################
-sub countWolfReadings($)
+sub _ISM8I_countWolfReadings($)
 {
   my $hash = shift;
   my $c = 0;
@@ -821,9 +821,9 @@ sub countWolfReadings($)
 
 
 ###############################################################
-#                  deleteIgnores
+#                  _ISM8I_deleteIgnores
 ###############################################################
-sub deleteIgnores($)
+sub _ISM8I_deleteIgnores($)
 {
    my $hash = shift;
    my $name = $hash->{NAME};
@@ -831,14 +831,14 @@ sub deleteIgnores($)
    my @datapoints = split(/ /, $ignores);
 
    foreach my $dp (@datapoints) { 
-      my $reading = find_reading_on_dp($hash, $dp);
+      my $reading = _ISM8I_find_reading_on_dp($hash, $dp);
       if ( defined($reading) ) { fhem("deletereading $name $reading");; }
    }
 }
 
 
 ###############################################################
-#                  loadDatenpunkte
+#                  _ISM8I_loadDatenpunkte
 ###############################################################
 #Datenpunkte aus einem CSV File (Semikolon-separiert) laden.
 #Die Reihenfolge der CSV Spalten lautet: ID; Gerät; Datenpunkt; 
@@ -846,7 +846,7 @@ sub deleteIgnores($)
 #Die einzelnen CSV Felder dürfen keine Kommas, Leerstellen oder 
 #Anführungszeichen enthalten.
 ###############################################################
-sub loadDatenpunkte
+sub _ISM8I_loadDatenpunkte
 {
    #erstmal vorsichtshalber datenpunkte array löschen:
    while(@datenpunkte) { shift(@datenpunkte); }
@@ -857,7 +857,7 @@ sub loadDatenpunkte
    open($data, '<:encoding(UTF-8)', $file) or die "Could not open '$file' $!\n";
    
    while (my $line = <$data>) {
-     my @fields = split(/;/, r_trim($line));
+     my @fields = split(/;/, _ISM8I_r_trim($line));
 	 if (scalar(@fields) == 6) {
 	    $datenpunkte[0 + $fields[0]] = [ @fields ]; # <-so hinzufügen, damit der Index mit der DP ID übereinstimmt zu einfacheren Suche.
 		$c ++;
@@ -865,13 +865,13 @@ sub loadDatenpunkte
    }
   
   close $data;
-  Log3 undef, 4, "WOLF_ISM8I: loadDatenpunkte -> $c";
+  Log3 undef, 4, "WOLF_ISM8I: _ISM8I_loadDatenpunkte -> $c";
 
 }
 
 
 ###############################################################
-#                  loadSetter
+#                  _ISM8I_loadSetter
 ###############################################################
 #Datenpunkte aus einem CSV File (Semikolon-separiert) laden.
 #Die Reihenfolge der CSV Spalten lautet: 
@@ -880,7 +880,7 @@ sub loadDatenpunkte
 #Die einzelnen CSV Felder dürfen keine #, Kommas, Leerstellen 
 #oder Anführungszeichen enthalten.
 ###############################################################
-sub loadSetter
+sub _ISM8I_loadSetter
 {
    #erstmal vorsichtshalber writepunkte array löschen:
    while(@writepunkte) { shift(@writepunkte); }
@@ -893,35 +893,35 @@ sub loadSetter
    
    while ($line = <$data>) {
 	 if ($line !~ /#/) {
-        @fields = split(/;/, r_trim($line));
+        @fields = split(/;/, _ISM8I_r_trim($line));
 	    if (scalar(@fields) == 6) {
 		   $c ++;
 	       $writepunkte[0 + $fields[0]] = [ @fields ]; # <-so hinzufügen, damit der Index mit der DP ID übereinstimmt zu einfacheren Suche.
 	       $dpid = $fields[0];
-	       $geraet = getFhemFriendly($fields[1]);
-	       $datenpunkt = getFhemFriendly($fields[2]);
-	       $einheit = getFhemFriendly($fields[3]);
+	       $geraet = _ISM8I_getFhemFriendly($fields[1]);
+	       $datenpunkt = _ISM8I_getFhemFriendly($fields[2]);
+	       $einheit = _ISM8I_getFhemFriendly($fields[3]);
            $setter = "$geraet.$dpid.$datenpunkt";
 		   if (length($einheit) > 0) { $setter .= ".$einheit"; }
-		   $widget = getSetterWidget($fields[4], $fields[5]);
+		   $widget = _ISM8I_getSetterWidget($fields[4], $fields[5]);
 		   if (length($widget) > 0) { $setter .= ":$widget"; }
 
 	       $sets{$setter}="noArg"; # %sets ist die global definierte Setter Variable
 		   
-	       #Log3 undef, 3, "WOLF_ISM8I: loadSetter -> $setter"; 
+	       #Log3 undef, 3, "WOLF_ISM8I: _ISM8I_loadSetter -> $setter"; 
 		}
 	 }
    }
 	
    close $data;
-   Log3 undef, 4, "WOLF_ISM8I: loadSetter -> $c";
+   Log3 undef, 4, "WOLF_ISM8I: _ISM8I_loadSetter -> $c";
 }
 
 
 ###############################################################
-#                  getSetterWidget
+#                  _ISM8I_getSetterWidget
 ###############################################################
-sub getSetterWidget($$)
+sub _ISM8I_getSetterWidget($$)
 {
 	my $b = shift;
 	my $s = shift;
@@ -962,12 +962,12 @@ sub getSetterWidget($$)
 
 
 ###############################################################
-#                  dataToHex
+#                  _ISM8I_dataToHex
 ###############################################################
 #Wandelt Daten in HEX Werte zur besseren Darstellung von 
 #unleserlichen Werten.
 ###############################################################
-sub dataToHex($)
+sub _ISM8I_dataToHex($)
 {
    my $data = shift;
    return "" if (length($data) <= 0);
@@ -978,44 +978,44 @@ sub dataToHex($)
 
 ###############################################################
 # this sub converts a decimal IP to a dotted IP
-sub dec2ip($) { join '.', unpack 'C4', pack 'N', shift; }
+sub _ISM8I_dec2ip($) { join '.', unpack 'C4', pack 'N', shift; }
 
 ###############################################################
 # this sub converts a dotted IP to a decimal IP
-sub ip2dec($) { unpack N => pack CCCC => split /\./ => shift; }
+sub _ISM8I_ip2dec($) { unpack N => pack CCCC => split /\./ => shift; }
 
 ###############################################################
 ### Whitespace (v.a. CR LF) rechts im String löschen
 
-sub r_trim { my $s = shift; $s =~ s/\s+$//; return $s; }
+sub _ISM8I_r_trim { my $s = shift; $s =~ s/\s+$//; return $s; }
 
 ###############################################################
 ### Whitespace links im String löschen
 
-sub l_trim { my $s = shift; $s =~ s/^\s+//; return $s; }
+sub _ISM8I_l_trim { my $s = shift; $s =~ s/^\s+//; return $s; }
 
 ###############################################################
 ### Allen Whitespace im String löschen
 
-sub all_trim { my $s = shift; $s =~ s/\s+//g; return $s; }
+sub _ISM8I_al_l_trim { my $s = shift; $s =~ s/\s+//g; return $s; }
 
 ###############################################################
 ### Doppelten Whitespace im String durch ein Leezeichen ersetzen
 
-sub dbl_trim { my $s = shift; $s =~ s/\s+/ /g; return $s; }
+sub _ISM8I_db_l_trim { my $s = shift; $s =~ s/\s+/ /g; return $s; }
 
 ###############################################################
-### r_trim, l_trim, dbl_trim zusammen auf einen String anwenden
+### _ISM8I_r_trim, _ISM8I_l_trim, _ISM8I_db_l_trim zusammen auf einen String anwenden
 
-sub l_r_dbl_trim { my $s = shift; my $r = l_trim(r_trim(dbl_trim($s))); return $r; }
+sub _ISM8I_l_r_db_l_trim { my $s = shift; my $r = _ISM8I_l_trim(_ISM8I_r_trim(_ISM8I_db_l_trim($s))); return $r; }
 
 
 ###############################################################
-#                  find_reading_on_dp
+#                  _ISM8I_find_reading_on_dp
 ###############################################################
 ### Schreibt alle vorhandenen Readings ins Log
 ###############################################################
-sub find_reading_on_dp($$) 
+sub _ISM8I_find_reading_on_dp($$) 
 {
   my ($hash, $find) = @_;
   if ($find !~ m/^\d{1,3}$/) { return undef; }
@@ -1032,12 +1032,12 @@ sub find_reading_on_dp($$)
 
 
 ###############################################################
-#                  getFhemFriendly
+#                  _ISM8I_getFhemFriendly
 ###############################################################
 #Ersetzt alle Zeichen so, dass das Ergebnis als FHEM Reading 
 #Name taugt.
 ###############################################################
-sub getFhemFriendly($)
+sub _ISM8I_getFhemFriendly($)
 {
    my $working_string = shift;
    my @tbr = ("-","","ö","oe","ä","ae","ü","ue","Ö","Oe","Ä","Ae","Ü","Ue","ß","ss","³","3","²","2","°C","C","%","proz","[[:punct:][:space:][:cntrl:]]","_","___","_","__","_","^_","","_\$","");
@@ -1059,12 +1059,12 @@ sub getFhemFriendly($)
 
 
 ###############################################################
-#                  getFhemInOut
+#                  _ISM8I_getFhemInOut
 ###############################################################
 #Verwandelt die Out/In Angabe (ob ein Datenpunkt auch Eingaben 
 #akzeptiert) in das FHEM freundlichen IO, I oder O.
 ###############################################################
-sub getFhemInOut($)
+sub _ISM8I_getFhemInOut($)
 {
   my $working_string = shift;
   my $result = "";
@@ -1077,7 +1077,7 @@ return $result;
 
 
 ###############################################################
-#                  getDatenpunkt
+#                  _ISM8I_getDatenpunkt
 ###############################################################
 #Returnt aus dem 2D Array mit Datenpunkten den Datenpunkt als 
 #Array mit der übergebenen DP ID.
@@ -1085,7 +1085,7 @@ return $result;
 #2 = Datenpunkt, 3 = KNX-Datenpunkttyp, 4 = Output/Input, 
 #5 = Einheit)
 ###############################################################
-sub getDatenpunkt($$)
+sub _ISM8I_getDatenpunkt($$)
 {
    my ($dpid, $index) = @_;
    my $d = $datenpunkte[$dpid][$index];
@@ -1094,7 +1094,7 @@ sub getDatenpunkt($$)
 
 
 ###############################################################
-#                  getCsvResult
+#                  _ISM8I_getCsvResult
 ###############################################################
 #Berchnet den Inhalt des Telegrams und gibt das Ergebnis im 
 #CSV Mode ';'-separiert.
@@ -1102,13 +1102,13 @@ sub getDatenpunkt($$)
 #Ergebnis: DP_ID [1]; Gerät [2]; Datenpunkt [3]; Out/In [4]; 
 #Wert [5]; Einheit [6] (falls vorhanden)
 ###############################################################
-sub getCsvResult($$)
+sub _ISM8I_getCsvResult($$)
 {
    my ($dp_id, $dp_val) = @_;
-   my $geraet = getDatenpunkt($dp_id, 1);
-   my $datenpunkt = getDatenpunkt($dp_id, 2);
-   my $datatype = getDatenpunkt($dp_id, 3);
-   my $inout = getFhemInOut(getDatenpunkt($dp_id, 4));
+   my $geraet = _ISM8I_getDatenpunkt($dp_id, 1);
+   my $datenpunkt = _ISM8I_getDatenpunkt($dp_id, 2);
+   my $datatype = _ISM8I_getDatenpunkt($dp_id, 3);
+   my $inout = _ISM8I_getFhemInOut(_ISM8I_getDatenpunkt($dp_id, 4));
    my $result = $dp_id.";".$geraet.";".$datenpunkt.";".$inout.";";
    my $v = "ERR:NoResult";
    
@@ -1134,47 +1134,47 @@ sub getCsvResult($$)
 	 }
    elsif ($datatype eq "DPT_Scaling") 
      {
-	  $result .= convert_DptScalingToNumber($dp_val).";%"; 
+	  $result .= _ISM8I_convert_DptScalingToNumber($dp_val).";%"; 
 	 }
    elsif ($datatype eq "DPT_Value_Temp") 
      {
-	  $result .= sprintf("%.1f", convert_DptFloatToNumber($dp_val)).";°C";
+	  $result .= sprintf("%.1f", _ISM8I_convert_DptFloatToNumber($dp_val)).";°C";
 	 }
    elsif ($datatype eq "DPT_Value_Tempd") 
      {
-	  $result .= sprintf("%.1f", convert_DptFloatToNumber($dp_val)).";K";
+	  $result .= sprintf("%.1f", _ISM8I_convert_DptFloatToNumber($dp_val)).";K";
 	 }
    elsif ($datatype eq "DPT_Value_Pres") 
      {
-	  $result .= convert_DptFloatToNumber($dp_val).";Pa";
+	  $result .= _ISM8I_convert_DptFloatToNumber($dp_val).";Pa";
 	 }
    elsif ($datatype eq "DPT_Power") 
      {
-	  $result .= convert_DptFloatToNumber($dp_val).";kW";
+	  $result .= _ISM8I_convert_DptFloatToNumber($dp_val).";kW";
 	 }
    elsif ($datatype eq "DPT_Value_Volume_Flow") 
      {
-	  $result .= convert_DptFloatToNumber($dp_val).";l/h";
+	  $result .= _ISM8I_convert_DptFloatToNumber($dp_val).";l/h";
 	 }
    elsif ($datatype eq "DPT_TimeOfDay") 
      {
-	  $result .= convert_DptTimeToString($dp_val);
+	  $result .= _ISM8I_convert_DptTimeToString($dp_val);
 	 }
    elsif ($datatype eq "DPT_Date") 
      {
-	  $result .= convert_DptDateToString($dp_val);
+	  $result .= _ISM8I_convert_DptDateToString($dp_val);
 	 }
    elsif ($datatype eq "DPT_FlowRate_m3/h") 
      {
-	  $result .= (convert_DptLongToNumber($dp_val) * 0.0001).";m³/h";
+	  $result .= (_ISM8I_convert_DptLongToNumber($dp_val) * 0.0001).";m³/h";
 	 }
    elsif ($datatype eq "DPT_ActiveEnergy") 
      {
-	  $result .= convert_DptLongToNumber($dp_val).";Wh";
+	  $result .= _ISM8I_convert_DptLongToNumber($dp_val).";Wh";
 	 }
    elsif ($datatype eq "DPT_ActiveEnergy_kWh") 
      {
-	  $result .= convert_DptLongToNumber($dp_val).";kWh";
+	  $result .= _ISM8I_convert_DptLongToNumber($dp_val).";kWh";
 	 }
    elsif ($datatype eq "DPT_HVACMode") 
      {
@@ -1220,25 +1220,25 @@ sub getCsvResult($$)
 
 
 ###############################################################
-#                  codeSetting
+#                  _ISM8I_codeSetting
 ###############################################################
 #Erzeugt ein Datagramm dass an ISM8i gesendet wird nach einem 'set'
 ###############################################################
-sub codeSetting($$)
+sub _ISM8I_codeSetting($$)
 {
    my ($id, $value) = @_;
-   my $type = getDatenpunkt($id, 3);
-   my $dpv = codeValueByType($type, $value); # DP Value
+   my $type = _ISM8I_getDatenpunkt($id, 3);
+   my $dpv = _ISM8I_codeValueByType($type, $value); # DP Value
    
    if (defined($dpv)) {
-      my $dp = convert_NumberToChars($id, 2); # DP Id
-      my $dpvLength = convert_NumberToChars(length($dpv), 1);
+      my $dp = _ISM8I_convert_NumberToChars($id, 2); # DP Id
+      my $dpvLength = _ISM8I_convert_NumberToChars(length($dpv), 1);
       my $ipHeader = chr(0x06).chr(0x20).chr(0xf0).chr(0x80);
       my $conHeader = chr(0x04).chr(0x00).chr(0x00).chr(0x00);
       my $objMsg = chr(0xf0).chr(0xc1).$dp.chr(0x00).chr(0x01).$dp.chr(0x00).$dpvLength.$dpv;
-      my $frameSize = convert_NumberToChars(2 + length($ipHeader) + length($conHeader) + length($objMsg), 2);
+      my $frameSize = _ISM8I_convert_NumberToChars(2 + length($ipHeader) + length($conHeader) + length($objMsg), 2);
 	  
-      #Debug("ISM8i codeSetting: id->$id / value->$value / type->$type / dpv->".dataToHex($dpv)." / dpvLength->".dataToHex($dpvLength));
+      #Debug("ISM8i _ISM8I_codeSetting: id->$id / value->$value / type->$type / dpv->"._ISM8I_dataToHex($dpv)." / dpvLength->"._ISM8I_dataToHex($dpvLength));
    
 	  $ipHeader = $ipHeader.$frameSize;
       return $ipHeader.$conHeader.$objMsg;
@@ -1249,32 +1249,32 @@ sub codeSetting($$)
 
 
 ###############################################################
-#                  codeValueByType
+#                  _ISM8I_codeValueByType
 ###############################################################
 #Erzeugt ein Datagramm-Wert zum Senden an das ISM8i nach einem 'set'
 ###############################################################
-sub codeValueByType($$)
+sub _ISM8I_codeValueByType($$)
 {
    my ($type, $val) = @_;
    my $ret = undef;
    
    if ($type eq "DPT_Switch") {
-	  if ($val == 0 or $val == 1) { $ret = convert_NumberToChars($val & 0xff, 1); }
+	  if ($val == 0 or $val == 1) { $ret = _ISM8I_convert_NumberToChars($val & 0xff, 1); }
    }
    elsif ($type eq "DPT_Value_Temp" or $type eq "DPT_Value_Tempd") {
-      $ret = convert_NumberToChars(convert_NumberToDptFloat($val), 2);
+      $ret = _ISM8I_convert_NumberToChars(_ISM8I_convert_NumberToDptFloat($val), 2);
    }
    elsif ($type eq "DPT_HVACMode" or $type eq "DPT_DHWMode") {
-	  if ($val >= 0 and $val <= 4) { $ret = convert_NumberToChars($val & 0xff, 1); }
+	  if ($val >= 0 and $val <= 4) { $ret = _ISM8I_convert_NumberToChars($val & 0xff, 1); }
    }
    elsif ($type eq "DPT_Date") {
-      $ret = convert_NumberToChars(convert_StringToDptTime_DayOnly($val), 3);
+      $ret = _ISM8I_convert_NumberToChars(_ISM8I_convert_StringToDptTime_DayOnly($val), 3);
    }
    elsif ($type eq "DPT_TimeOfDay") {
-      $ret = convert_NumberToChars(convert_StringToDptTime_TimeOnly($val), 3);
+      $ret = _ISM8I_convert_NumberToChars(_ISM8I_convert_StringToDptTime_TimeOnly($val), 3);
    }
    elsif ($type eq "DPT_Scaling") {
-      $ret = convert_NumberToChars(convert_NumberToDptScaling($val), 1);
+      $ret = _ISM8I_convert_NumberToChars(_ISM8I_convert_NumberToDptScaling($val), 1);
    }
    
    return $ret;
@@ -1282,34 +1282,34 @@ sub codeValueByType($$)
 
 
 ###############################################################
-#                  convert_NumberToChars
+#                  _ISM8I_convert_NumberToChars
 ###############################################################
-#Hilsfunktion für 'codeValueByType'. Maximal 4 Byte lang! 
+#Hilsfunktion für '_ISM8I_codeValueByType'. Maximal 4 Byte lang! 
 ###############################################################
-sub convert_NumberToChars($$)
+sub _ISM8I_convert_NumberToChars($$)
 {
    my ($val,$len) = @_;
    my $res;
    
    if ($len == 1) {
-	  $res = pack("C", getByteweise($val, 0));
+	  $res = pack("C", _ISM8I_getByteweise($val, 0));
    } elsif ($len == 2) {
-	  $res = pack("C*", getByteweise($val, 1), getByteweise($val, 0));
+	  $res = pack("C*", _ISM8I_getByteweise($val, 1), _ISM8I_getByteweise($val, 0));
    } elsif ($len == 3) {
-	  $res = pack("C*", getByteweise($val, 2), getByteweise($val, 1), getByteweise($val, 0));
+	  $res = pack("C*", _ISM8I_getByteweise($val, 2), _ISM8I_getByteweise($val, 1), _ISM8I_getByteweise($val, 0));
    } elsif ($len == 4) {
-	  $res = pack("C*", getByteweise($val, 3), getByteweise($val, 2), getByteweise($val, 1), getByteweise($val, 0));
+	  $res = pack("C*", _ISM8I_getByteweise($val, 3), _ISM8I_getByteweise($val, 2), _ISM8I_getByteweise($val, 1), _ISM8I_getByteweise($val, 0));
    }
    
    return $res;
 }
 
 ###############################################################
-#                  getLen
+#                  _ISM8I_getLen
 ###############################################################
 # Bestimmt die Bytelänge einer Zahl an Hand ihres Wertes.
 ###############################################################
-sub getLen($)
+sub _ISM8I_getLen($)
 {
    my $val = shift;
    my $len = 0;
@@ -1346,13 +1346,13 @@ sub getLen($)
 ###############################################################
 
 ###############################################################
-#                  convert_DptFloatToNumber
+#                  _ISM8I_convert_DptFloatToNumber
 ###############################################################
-sub convert_DptFloatToNumber($)
+sub _ISM8I_convert_DptFloatToNumber($)
 {
-  use bignum;
+   #use bignum;
   
-  my $val = shift;
+   my $val = shift;
    
    if ($val == 0x7fff) { return "invalid"; }
    
@@ -1365,13 +1365,12 @@ sub convert_DptFloatToNumber($)
    
    #return ($mantisse * 0.01) * (2 ** $exponent);
    return (1 << $exponent) * 0.01 * $mantisse;
-
 }
 
 ###############################################################
-#                  convert_NumberToDptFloat
+#                  _ISM8I_convert_NumberToDptFloat
 ###############################################################
-sub convert_NumberToDptFloat($)
+sub _ISM8I_convert_NumberToDptFloat($)
 {
    my $val = shift;
    
@@ -1399,7 +1398,7 @@ sub convert_NumberToDptFloat($)
 
 
 ###############################################################
-#                  convert_DptLongToNumber
+#                  _ISM8I_convert_DptLongToNumber
 ###############################################################
 # Format: 4 octets: V32
 # octet nr: 4MSB 3 2 1LSB
@@ -1409,7 +1408,7 @@ sub convert_NumberToDptFloat($)
 # Range: SignedValue = [-2 147 483 648 ... 2 147 483 647]
 # PDT: PDT_LONG 
 ###############################################################
-sub convert_DptLongToNumber($)
+sub _ISM8I_convert_DptLongToNumber($)
 {
    my $val = shift;
    return $val;
@@ -1438,9 +1437,9 @@ sub convert_DptLongToNumber($)
 ###############################################################
 
 ###############################################################
-#                  convert_DptScalingToNumber
+#                  _ISM8I_convert_DptScalingToNumber
 ###############################################################
-sub convert_DptScalingToNumber($)
+sub _ISM8I_convert_DptScalingToNumber($)
 {
    my $val = shift;
    my $result = ($val & 0xff) * 100 / 255; 
@@ -1448,9 +1447,9 @@ sub convert_DptScalingToNumber($)
 }
 
 ###############################################################
-#                  convert_NumberToDptScaling
+#                  _ISM8I_convert_NumberToDptScaling
 ###############################################################
-sub convert_NumberToDptScaling($)
+sub _ISM8I_convert_NumberToDptScaling($)
 {
    my $val = shift;
    if ($val <= 0 or $val >= 100) { return 0x7fff; } 
@@ -1476,31 +1475,31 @@ sub convert_NumberToDptScaling($)
 ###############################################################
 
 ###############################################################
-#                  convert_DptTimeToString
+#                  _ISM8I_convert_DptTimeToString
 ###############################################################
-sub convert_DptTimeToString($)
+sub _ISM8I_convert_DptTimeToString($)
 {
    my $val = shift;
    
    my @weekdays = ["-","Mo","Di","Mi","Do","Fr","Sa","So"];
-   my $weekday = getBitweise($val, 21, 23);
-   my $hour = getBitweise($val, 16, 20);
-   my $min = getBitweise($val, 8, 13);
-   my $sec = getBitweise($val, 0, 5);
+   my $weekday = _ISM8I_getBitweise($val, 21, 23);
+   my $hour = _ISM8I_getBitweise($val, 16, 20);
+   my $min = _ISM8I_getBitweise($val, 8, 13);
+   my $sec = _ISM8I_getBitweise($val, 0, 5);
 
    return sprintf("%s %d:%d:%d", $weekdays[$weekday], $hour, $min, $sec);
 }
 
 
 ###############################################################
-#                  convert_StringToDptTime_DayOnly
+#                  _ISM8I_convert_StringToDptTime_DayOnly
 ###############################################################
 #Übersetzt nur den Wochentag. Die Uhrzeit ist 0.
 ###############################################################
-sub convert_StringToDptTime_DayOnly($)
+sub _ISM8I_convert_StringToDptTime_DayOnly($)
 {
    my $val = shift;
-   my $day = substr(uc(all_trim($val)),0,2); # Ersten 2 Buchstaben des von Whitespace gereinigten und nach uppercase konvertierten Wert. 
+   my $day = substr(uc(_ISM8I_al_l_trim($val)),0,2); # Ersten 2 Buchstaben des von Whitespace gereinigten und nach uppercase konvertierten Wert. 
    my @weekdays = ("-","MO","DI","MI","DO","FR","SA","SO"); # ^MO|^DI|^MI|^DO|^FR|^SA|^SO
    my $d;
    my $i = -1;
@@ -1511,7 +1510,7 @@ sub convert_StringToDptTime_DayOnly($)
 	  $c ++;
    }
 
-   #Debug("ISM8i convert_StringToDptTime_DayOnly: val->$val / day->$day / i->$i");
+   #Debug("ISM8i _ISM8I_convert_StringToDptTime_DayOnly: val->$val / day->$day / i->$i");
 
    return 0x7fff if ($i == -1); # Invalide value
    
@@ -1520,11 +1519,11 @@ sub convert_StringToDptTime_DayOnly($)
 
 
 ###############################################################
-#                  convert_StringToDptTime_TimeOnly
+#                  _ISM8I_convert_StringToDptTime_TimeOnly
 ###############################################################
 #Übersetzt nur die Uhrzeit. Der Wochentag ist 0.
 ###############################################################
-sub convert_StringToDptTime_TimeOnly($)
+sub _ISM8I_convert_StringToDptTime_TimeOnly($)
 {
    my $val = shift;
    my @date = split(/:/, $val);
@@ -1557,26 +1556,26 @@ sub convert_StringToDptTime_TimeOnly($)
 ###############################################################
 
 ###############################################################
-#                  convert_DptDateToString
+#                  _ISM8I_convert_DptDateToString
 ###############################################################
-sub convert_DptDateToString($)
+sub _ISM8I_convert_DptDateToString($)
 {
    my $val = shift;
-   my $day = getBitweise($val, 16, 20);
-   my $mon = getBitweise($val, 8, 11);
-   my $year = getBitweise($val, 0, 6);
+   my $day = _ISM8I_getBitweise($val, 16, 20);
+   my $mon = _ISM8I_getBitweise($val, 8, 11);
+   my $year = _ISM8I_getBitweise($val, 0, 6);
    if ($year < 90) { $year += 2000; } else { $year += 1900; }
    return sprintf("%02d.%02d.%04d", $day, $mon, $year);
 }
 
 
 ###############################################################
-#                  convert_StringToDptDate
+#                  _ISM8I_convert_StringToDptDate
 ###############################################################
-sub convert_StringToDptDate($)
+sub _ISM8I_convert_StringToDptDate($)
 {
    my $val = shift;
-   $val = all_trim($val);
+   $val = _ISM8I_al_l_trim($val);
    return 0x7fff if($val !~ m/^\d{1,2}\.\d{1,2}\.\d{4}/);
    
    my @date = split(/./, $val);
@@ -1593,13 +1592,13 @@ sub convert_StringToDptDate($)
 }
 
 ###############################################################
-#                  getBitweise
+#                  _ISM8I_getBitweise
 ###############################################################
 #Berechnet aus einer Zahl eine Zahl anhand der vorgegebenen Bits.
 #Maximal 4 Byte
 #$1 = Zahl, $2 = Startbit (0-basiert), $3 = Endbit
 ###############################################################
-sub getBitweise($$$)
+sub _ISM8I_getBitweise($$$)
 {
    my ($val, $start_bit, $end_bit) = @_;
    my ($b, $result);
@@ -1614,7 +1613,7 @@ sub getBitweise($$$)
 
 
 ###############################################################
-#                  setBitwise
+#                  _ISM8I_setBitwise
 ###############################################################
 #Setzt Bits an eine entsprechende Stelle einer Zahl falls der Bits
 #in der Ausgangszahl (Bit 0-basiert) vorhanden ist.
@@ -1622,7 +1621,7 @@ sub getBitweise($$$)
 #$2 = Startbit in der neuen Zahl, 
 #$3 = Endbit  in der neuen Zahl
 ###############################################################
-sub setBitwise($$$)
+sub _ISM8I_setBitwise($$$)
 {
    my ($val, $start_bit, $end_bit) = @_;
    my $newval = 0;
@@ -1637,12 +1636,12 @@ sub setBitwise($$$)
 
 
 ###############################################################
-#                  getByteweise
+#                  _ISM8I_getByteweise
 ###############################################################
 #Extrahiert aus einer Zahl den Byte an den geforderten Stelle.
 #$0 = Zahl, $1 = Bytenummer (0-basiert, rechts anfangend)
 ###############################################################
-sub getByteweise($$)
+sub _ISM8I_getByteweise($$)
 {
    my ($val, $byte) = @_;
    my $mask = 0xff << ($byte * 8);
