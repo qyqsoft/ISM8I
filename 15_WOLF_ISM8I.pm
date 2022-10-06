@@ -14,6 +14,8 @@
 
 package main;
 
+no bignum;
+
 use strict;
 use warnings;
 use utf8;
